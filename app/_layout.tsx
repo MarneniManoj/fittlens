@@ -6,13 +6,27 @@ function RootLayoutNav() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <Stack>
+    <Stack screenOptions={{ headerShown: false }}>
       {!isAuthenticated ? (
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen 
+          name="(auth)" 
+          options={{ 
+            headerShown: false,
+            // Prevent going back to auth screens when logged in
+            gestureEnabled: false,
+          }} 
+        />
       ) : (
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen 
+          name="(tabs)" 
+          options={{ 
+            headerShown: false,
+            // Prevent going back to auth screens when logged in
+            gestureEnabled: false,
+          }} 
+        />
       )}
-      <Stack.Screen name="+not-found" />
+      <Stack.Screen name="+not-found" options={{ headerShown: false }} />
     </Stack>
   );
 }

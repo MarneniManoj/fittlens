@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -6,32 +6,33 @@ import { useAuth } from '../context/AuthContext';
 /**
  * LoginScreen Component
  * 
- * Provides user authentication functionality with a form for username/email and password.
+ * Provides user authentication functionality with a form for email and password.
  * Uses the AuthContext to manage authentication state and navigation.
  * 
  * Features:
- * - Username/Email input
+ * - Email input
  * - Password input with secure entry
- * - Login button
+ * - Login button with loading state
+ * - Error message display
  * - Link to signup page
  */
 export default function LoginScreen() {
-  // State for form inputs
-  const [username, setUsername] = useState('');
+  // Form state
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
-  // Get login function from auth context
-  const { login } = useAuth();
+  // Get authentication context
+  const { login, isLoading, error } = useAuth();
 
   /**
    * Handle login button press
-   * Currently implements basic validation (non-empty fields)
-   * TODO: Add proper authentication logic
+   * Validates input and calls login function
    */
-  const handleLogin = () => {
-    if (username && password) {
-      login();
+  const handleLogin = async () => {
+    if (!email || !password) {
+      return;
     }
+    await login({ email, password });
   };
 
   return (
@@ -39,15 +40,23 @@ export default function LoginScreen() {
       {/* Header */}
       <Text style={styles.title}>Welcome Back!</Text>
       
-      {/* Username/Email Input */}
+      {/* Error Message */}
+      {error && (
+        <Text style={styles.errorText}>{error}</Text>
+      )}
+      
+      {/* Email Input */}
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Username or Email</Text>
+        <Text style={styles.label}>Email</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter your username or email"
+          placeholder="Enter your email"
           placeholderTextColor="#666673"
-          value={username}
-          onChangeText={setUsername}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          autoComplete="email"
         />
       </View>
 
@@ -61,12 +70,21 @@ export default function LoginScreen() {
           secureTextEntry
           value={password}
           onChangeText={setPassword}
+          autoComplete="password"
         />
       </View>
 
       {/* Login Button */}
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginButtonText}>Login</Text>
+      <TouchableOpacity 
+        style={[styles.loginButton, (!email || !password) && styles.loginButtonDisabled]} 
+        onPress={handleLogin}
+        disabled={isLoading || !email || !password}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <Text style={styles.loginButtonText}>Login</Text>
+        )}
       </TouchableOpacity>
 
       {/* Sign Up Link */}
@@ -117,6 +135,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
+  loginButtonDisabled: {
+    backgroundColor: '#2178FA80',
+  },
   loginButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
@@ -136,5 +157,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     fontFamily: 'Inter',
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 14,
+    marginBottom: 20,
+    textAlign: 'center',
   },
 }); 

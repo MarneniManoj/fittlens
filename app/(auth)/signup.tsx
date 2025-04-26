@@ -1,32 +1,90 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Link } from 'expo-router';
+import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * SignupScreen Component
  * 
  * Provides user registration functionality with a form for creating a new account.
- * Includes validation for password confirmation and links back to login.
+ * Uses the AuthContext to manage authentication state and navigation.
  * 
  * Features:
- * - Username/Email input
+ * - Name input
+ * - Email input
  * - Password input with secure entry
  * - Password confirmation
- * - Sign up button
+ * - Sign up button with loading state
+ * - Error message display
  * - Link back to login page
  */
 export default function SignupScreen() {
+  // Form state
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
+  // Get authentication context
+  const { signup, isLoading, error } = useAuth();
+
+  /**
+   * Handle signup button press
+   * Validates input and calls signup function
+   */
+  const handleSignup = async () => {
+    if (!name || !email || !password || !confirmPassword) {
+      return;
+    }
+    if (password !== confirmPassword) {
+      // You might want to show this error in the UI
+      console.error('Passwords do not match');
+      return;
+    }
+    await signup({ 
+      name,
+      email, 
+      password, 
+      confirmPassword,
+      deviceId: 'default-device', // You might want to generate this dynamically
+    });
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <Text style={styles.title}>Create Account</Text>
       
-      {/* Username/Email Input */}
+      {/* Error Message */}
+      {error && (
+        <Text style={styles.errorText}>{error}</Text>
+      )}
+      
+      {/* Name Input */}
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Username or Email</Text>
+        <Text style={styles.label}>Name</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter your username or email"
+          placeholder="Enter your name"
           placeholderTextColor="#666673"
+          value={name}
+          onChangeText={setName}
+          autoComplete="name"
+        />
+      </View>
+
+      {/* Email Input */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your email"
+          placeholderTextColor="#666673"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          autoComplete="email"
         />
       </View>
 
@@ -38,6 +96,9 @@ export default function SignupScreen() {
           placeholder="Enter your password"
           placeholderTextColor="#666673"
           secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          autoComplete="new-password"
         />
       </View>
 
@@ -49,12 +110,23 @@ export default function SignupScreen() {
           placeholder="Confirm your password"
           placeholderTextColor="#666673"
           secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          autoComplete="new-password"
         />
       </View>
 
       {/* Sign Up Button */}
-      <TouchableOpacity style={styles.signupButton}>
-        <Text style={styles.signupButtonText}>Sign Up</Text>
+      <TouchableOpacity 
+        style={[styles.signupButton, (!name || !email || !password || !confirmPassword) && styles.signupButtonDisabled]} 
+        onPress={handleSignup}
+        disabled={isLoading || !name || !email || !password || !confirmPassword}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <Text style={styles.signupButtonText}>Sign Up</Text>
+        )}
       </TouchableOpacity>
 
       {/* Login Link */}
@@ -105,6 +177,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
+  signupButtonDisabled: {
+    backgroundColor: '#2178FA80',
+  },
   signupButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
@@ -124,5 +199,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     fontFamily: 'Inter',
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 14,
+    marginBottom: 20,
+    textAlign: 'center',
   },
 }); 
